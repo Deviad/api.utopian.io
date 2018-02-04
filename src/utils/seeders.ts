@@ -4,10 +4,10 @@ import { UserSchema, PostSchema } from "../server/models";
 import * as R from "ramda";
 const Admin = mongoose.mongo.Admin;
 
-const counter = 3000;
+const counter = 10;
 
 const handleError = err => {
-    console.log("ERROR", err);
+    throw `${err.message}`;
 };
 type CallbackFunction = () => any;
 
@@ -16,24 +16,28 @@ let promise = new Promise(
         resolve();
     }
 );
-const DBURL = 'mongodb://localhost/utopian-test';
+const DBURL = "mongodb://localhost/utopian-test";
 const connection = mongoose.connect(DBURL);
-
+mongoose.Promise = global.Promise;
 const createUsers = () => {
     const User = mongoose.model("User", UserSchema);
-    for (let i = 1; i <= counter; i++) {
+
+
+    const UserBag = [...Array(counter)].map((_, i) => {
         const email = faker.Internet.email();
-        const account = Math.floor(Math.random()*1000);
-        const userObject = {
-            account: i + "",
+        let account = Math.floor(Math.random() * 1000);
+        return {
+            account: String(account),
             email
         };
-        User.create({account: i +'', email}, function(err, small) {
-            if (err) return handleError(err);
-        });
-    }
+    });
+    return promise
+    .then(() => User.insertMany(UserBag))
+    .then((docs)=>console.log(`${docs.length} users were successfully stored.`))
+    .catch((err) => {throw `User.insertMany generated an error ${err.message}`});
 };
 
 promise
     .then(() => createUsers())
-    .catch(err => err);
+    .then(msg => console.log(msg))
+    .catch(err => console.log("shitHappens"));
