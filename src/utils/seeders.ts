@@ -1,7 +1,6 @@
-import Faker from "Faker";
+import * as faker from "Faker";
 import * as mongoose from "mongoose";
 import { UserSchema, PostSchema } from "../server/models";
-import config from "../config/config";
 import * as R from "ramda";
 const Admin = mongoose.mongo.Admin;
 
@@ -17,41 +16,24 @@ let promise = new Promise(
         resolve();
     }
 );
-
-const connection = mongoose.createConnection(config.mongo);
-
-const dbExists = (connection, dbName) => {
-     connection.on("open", function() {
-        // connection established
-         new Admin(connection.db).listDatabases(function(err, result) {
-            console.log("listDatabases succeeded");
-            // database list stored in result.databases
-            
-            const dbNames = R.pluck('name')(result.databases);
-    
-            if (dbNames.indexOf(dbName) === -1) {
-                
-            }
-        });
-    });
-};
+const DBURL = 'mongodb://localhost/utopian-test';
+const connection = mongoose.connect(DBURL);
 
 const createUsers = () => {
     const User = mongoose.model("User", UserSchema);
-    for (let i = 1; i++; i === counter) {
-        const email = Faker.Internet.email;
+    for (let i = 1; i <= counter; i++) {
+        const email = faker.Internet.email();
+        const account = Math.floor(Math.random()*1000);
         const userObject = {
-            account: { type: "Whatever" },
+            account: i + "",
             email
         };
-        User.create({ size: "small" }, function(err, small) {
+        User.create({account: i +'', email}, function(err, small) {
             if (err) return handleError(err);
-            // saved!
         });
     }
 };
 
 promise
-    .then(() => dbExists(connection, "utopian-io"))
-    .then(list => console.log("whatever", list))
+    .then(() => createUsers())
     .catch(err => err);
