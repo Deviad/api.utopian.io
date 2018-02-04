@@ -7,7 +7,7 @@ import Session from './session.model';
 /**
  * User Schema
  */
-export const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
   account: {
     type: String,
     required: true

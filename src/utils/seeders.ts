@@ -1,35 +1,27 @@
 import * as faker from "Faker";
 import * as mongoose from "mongoose";
-import { UserSchema, PostSchema } from "../server/models";
+import { User, Post } from "../server/models";
 
 const counter = 500;
 
 type CallbackFunction = (...args) => any;
 
-let promise = new Promise(
-    (resolve: CallbackFunction, reject?: CallbackFunction) => {
-        resolve();
-    }
-);
+
 const DBURL = "mongodb://localhost/utopian-test";
 const connection = mongoose.connect(DBURL);
 // mongoose.Promise = global.Promise;
 
-const User = mongoose.model("User", UserSchema);
-const Post = mongoose.model("Post", PostSchema);
-
 const generateUsers = () => {
-    return [...Array(counter)].map((_, i) => {
+    let usersArray = Array();
+    for(let index=1; index<= counter; index++) {
         const email = faker.Internet.email();
         let account =
             faker.Internet.userName() +
             String(Math.floor(Math.random() * 10000));
         account = account.replace(/[^a-zA-Z0-9]/g, "");
-        return {
-            account,
-            email
-        };
-    });
+        usersArray[index] = {account,email};
+    }
+    return usersArray;
 };
 
 let postsAdded = 0;
@@ -50,8 +42,8 @@ const addPosts = arr =>
 const handlePosts = () => {
     let postArray = Array();
     return User.count({})
-        .then(count =>
-            [...Array(counter)].map((_, index) => {
+        .then(count => {
+            for(let index=1; index<= count; index++) {
                 const authorObject = User.findOne().skip(index);
                 const title = faker.Lorem.sentence();
                 const body = faker.Lorem.sentences();
@@ -59,7 +51,7 @@ const handlePosts = () => {
                     authorObject
                         .then(res => {
                             return {
-                                id: index + 1,
+                                id: index,
                                 author: res.account,
                                 title,
                                 body
@@ -73,8 +65,7 @@ const handlePosts = () => {
                 } else {
                     return;
                 }
-            })
-        )
+            }})
         .catch(err => console.error("error is ", err));
 };
 const addUsers = () =>
@@ -83,12 +74,11 @@ const addUsers = () =>
             console.log(`${docs.length} users were successfully stored.`)
         )
         .catch(err => {
-            throw `User.insertMany generated an error \n>>>\n>>> ${
-                err.message
-            }\n>>>`;
+            throw `User.insertMany generated an error \n>>>\n>>> ${err.message}\n>>>`;
         });
 
-promise
+
+new Promise((resolve: CallbackFunction) => resolve())
     .then(() => addUsers())
     .then(() => handlePosts())
     .catch(err => console.error(err));
