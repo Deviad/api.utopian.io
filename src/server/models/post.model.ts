@@ -6,7 +6,7 @@ import APIError from '../helpers/APIError';
 /**
  * Post Schema
  */
-const PostSchema = new mongoose.Schema({
+export const PostSchema = new mongoose.Schema({
   abs_rshares: {
     type: Number,
     //required: true,
