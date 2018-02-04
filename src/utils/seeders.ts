@@ -18,12 +18,13 @@ const connection = mongoose.connect(DBURL);
 const User = mongoose.model("User", UserSchema);
 const Post = mongoose.model("Post", PostSchema);
 
-
 const generateUsers = () => {
     return [...Array(counter)].map((_, i) => {
         const email = faker.Internet.email();
-        let account = faker.Internet.userName() +  String(Math.floor(Math.random() * 10000));
-        account = account.replace(/[^a-zA-Z0-9]/g, '');
+        let account =
+            faker.Internet.userName() +
+            String(Math.floor(Math.random() * 10000));
+        account = account.replace(/[^a-zA-Z0-9]/g, "");
         return {
             account,
             email
@@ -31,49 +32,63 @@ const generateUsers = () => {
     });
 };
 
+let postsAdded = 0;
 
-const addPosts = (arr) => 
+const addPosts = arr =>
     Post.insertMany(arr)
-        .then(docs => console.log(`${docs.length} posts were successfully stored.`))
+        .then(docs => {
+            postsAdded = postsAdded + docs.length;
+            if(postsAdded = counter) {
+                console.log(`${postsAdded} posts were successfully stored.`)
+                process.exit(0);
+            };    
+        })
         .catch(err => {
             throw `Post.insertMany generated an error \n>>>\n>>> ${err.message}\n>>>`;
         });
 
-const handlePosts = () =>
-   {
+const handlePosts = () => {
     let postArray = Array();
     return User.count({})
-        .then(count=>
+        .then(count =>
             [...Array(counter)].map((_, index) => {
-                const authorObject = User.findOne().skip(Math.floor(Math.random() * count));
+                const authorObject = User.findOne().skip(index);
                 const title = faker.Lorem.sentence();
-                const body = faker.Lorem.sentences();    
-                authorObject
-                .then(res => {
-                        return {
-                            id: index+1,
-                            author: res.account,
-                            title,  
-                            body 
-                        }
-                })
-                .then(res=> postArray[index] = res)
-                .then((arr)=>addPosts(arr))
-                .catch((err) =>  {throw `authorObject generated an error \n>>>\n>>> ${err.message}\n>>>`});
+                const body = faker.Lorem.sentences();
+                if (index !== counter) {
+                    authorObject
+                        .then(res => {
+                            return {
+                                id: index + 1,
+                                author: res.account,
+                                title,
+                                body
+                            };
+                        })
+                        .then(res => (postArray[index] = res))
+                        .then(arr => addPosts(arr))
+                        .catch(err => {
+                            throw `authorObject generated an error \n>>>\n>>> ${err.message}\n>>>`;
+                        });
+                } else {
+                    return;
+                }
             })
         )
-        .catch(err=>console.error('error is ', err)); 
-
-    }    
-const addUsers = () => 
- User.insertMany(generateUsers())
-    .then(docs => console.log(`${docs.length} users were successfully stored.`))
-    .catch(err => {
-        throw `User.insertMany generated an error \n>>>\n>>> ${err.message}\n>>>`;
-    });
-
+        .catch(err => console.error("error is ", err));
+};
+const addUsers = () =>
+    User.insertMany(generateUsers())
+        .then(docs =>
+            console.log(`${docs.length} users were successfully stored.`)
+        )
+        .catch(err => {
+            throw `User.insertMany generated an error \n>>>\n>>> ${
+                err.message
+            }\n>>>`;
+        });
 
 promise
     .then(() => addUsers())
     .then(() => handlePosts())
-    .catch((err)=>console.error(err));
+    .catch(err => console.error(err));
