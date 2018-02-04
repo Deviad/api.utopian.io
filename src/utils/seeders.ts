@@ -1,8 +1,7 @@
 import * as faker from "Faker";
 import * as mongoose from "mongoose";
 import { User, Post } from "../server/models";
-
-const counter = 500;
+const counter = 10;
 
 type CallbackFunction = (...args) => any;
 
@@ -26,48 +25,29 @@ const generateUsers = () => {
 
 let postsAdded = 0;
 
-const addPosts = arr =>
-    Post.insertMany(arr)
-        .then(docs => {
-            postsAdded = postsAdded + docs.length;
-            if(postsAdded = counter) {
-                console.log(`${postsAdded} posts were successfully stored.`)
-                process.exit(0);
-            };    
-        })
-        .catch(err => {
-            throw `Post.insertMany generated an error \n>>>\n>>> ${err.message}\n>>>`;
-        });
-
-const handlePosts = () => {
-    let postArray = Array();
-    return User.count({})
-        .then(count => {
-            for(let index=1; index<= count; index++) {
-                const authorObject = User.findOne().skip(index);
-                const title = faker.Lorem.sentence();
-                const body = faker.Lorem.sentences();
-                if (index !== counter) {
-                    authorObject
-                        .then(res => {
-                            return {
-                                id: index,
-                                author: res.account,
-                                title,
-                                body
-                            };
-                        })
-                        .then(res => (postArray[index] = res))
-                        .then(arr => addPosts(arr))
-                        .catch(err => {
-                            throw `authorObject generated an error \n>>>\n>>> ${err.message}\n>>>`;
-                        });
-                } else {
-                    return;
-                }
-            }})
-        .catch(err => console.error("error is ", err));
+const addPosts = (res) => {
+    console.log(res);
+    return Post.insertMany(res)
+    .then(docs => {
+        postsAdded = postsAdded + docs.length;
+        if(postsAdded === counter) {
+            console.log(`${postsAdded} posts were successfully stored.`)
+            process.exit(0);
+        };    
+    })
+    .catch(err => {
+        throw `Post.insertMany generated an error \n>>>\n>>> ${err.message}\n>>>`;
+    })
 };
+
+
+const generatePosts = ()=>
+new Promise((resolve: CallbackFunction) => resolve())
+    .then(()=> Promise.resolve(User.count({}) as PromiseLike<Number>))
+    .then(res=>res)
+    .then(res=>{console.log('ressss', res); return res})
+    .catch(err => console.error("error is ", err)); 
+
 const addUsers = () =>
     User.insertMany(generateUsers())
         .then(docs =>
@@ -80,5 +60,32 @@ const addUsers = () =>
 
 new Promise((resolve: CallbackFunction) => resolve())
     .then(() => addUsers())
-    .then(() => handlePosts())
+    .then(() => generatePosts())
     .catch(err => console.error(err));
+
+
+
+    // let postArray = Array();
+    // for(let index=0; index<= count; index++) {
+    //     const authorObject = User.findOne().skip(index);
+    //     const title = faker.Lorem.sentence();
+    //     const body = faker.Lorem.sentences();
+    //     if (index !== counter) {
+    //         authorObject
+    //             .then(res => {
+    //                 return {
+    //                     id: index,
+    //                     author: res.account,
+    //                     title,
+    //                     body
+    //                 };
+    //             })
+    //             .then(res => (postArray[index] = res))
+                
+    //             .catch(err => {
+    //                 throw `authorObject generated an error \n>>>\n>>> ${err.message}\n>>>`;
+    //             });
+    //     } else {
+    //         return Promise.resolve(postArray);
+    //     }        
+    // }})
